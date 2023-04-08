@@ -1,48 +1,44 @@
-from flask import Flask, render_template, request, redirect, url_for
-from datetime import date
-import requests
-import json
 import base64
+import json
+import os
+from datetime import date
+
+import requests
+from dotenv import load_dotenv,dotenv_values,find_dotenv
+from flask import Flask, redirect, render_template, request
 
 ###################3 Set up Spotify API authentication ###################
+#print(load_dotenv(find_dotenv(),encoding=None))
 SPOTIFY_ENDPOINT = "https://api.spotify.com/v1"
-ACCESS_TOKEN = "BQDjmSP4E8FLwZBLNTMUCipeUSPIv1U_Ux7a7FfkiSmd_6mXjrhrPAQgZVmxZnkMdsnxQbM8jqMHvp_QbbRtuoetft9XJLBqXGKrFGJecZmPmXQY8XyjtrxipStvSb2X8mgL5zuZRaCDoTrPPYIjeTujxKHglIguw5FztZ6ZF-uF3D21JAJVml8wpT24y2Ws8Vx3bf7DY7PTNsFQhhttsbF0des5MOQxGXqu7bBLPTgHg2JUt0hmm6Vvjm-QhYNgAHkeVASRT-tVJnkeASmyWyPA6opemYaV77ZErWYvZoA"
 AUTH_URL="https://accounts.spotify.com/api/token"
-CLIENT_ID = '55b477d8e1ae4325a6821ef6fc118ccc'
-CLIENT_SECRET = 'e88836c059974cceb56f84ba15a5bbe1'
-headers = {
-    'Authorization': f'Bearer {ACCESS_TOKEN}',
-}
+CLIENT_ID = os.environ['CLIENT_ID']
+CLIENT_SECRET = os.environ['CLIENT_SECRET']
+REFRESH_TOKEN = os.environ['REFRESH_TOKEN']
 ############################################################################
 app = Flask(__name__)
 
 def refresh_user_token():
-    global ACCESS_TOKEN
     ###encode the client secret and ID####
     string = CLIENT_ID + ":" + CLIENT_SECRET
     string_bytes = string.encode('ascii')
     b64_bytes = base64.b64encode(string_bytes)
     encoded_secret_key = b64_bytes.decode('ascii')
+    
     refreshheaders = {
     'Authorization': 'Basic ' + encoded_secret_key,
     'Content-Type': 'application/x-www-form-urlencoded'
     }
+    
     refresh_params = {
-    'grant_type': 'refresh_token','refresh_token': 'AQA28M2HJOoEnljV2UH3cirg53cFOtIRKkzqE5RhJEP93_5bUhScuspT94v53Wldtz0ba9fldLhXq89zaRKaArVpp4tIdh3aWQEpF1s6Xrvrjoh-MmlC3Oj4vVhHw_1NLyg'
+    'grant_type': 'refresh_token','refresh_token': REFRESH_TOKEN
     }
     response = json.loads(requests.post(AUTH_URL, params=refresh_params, headers=refreshheaders).text)
-    print(response)
     ACCESS_TOKEN = response['access_token']
-    print(ACCESS_TOKEN)
+    os.environ['ACCESS_TOKEN'] = ACCESS_TOKEN
 
 def get_current_user():
     response = json.loads(requests.get(SPOTIFY_ENDPOINT+'/me', headers=headers).text)
-    print(response)
-    if 'error' in response.keys() and response['error']['status'] == 401:
-        refresh_user_token()
-        get_current_user()
-    else:
-        return response['display_name'], response['id']
+    return response['display_name'], response['id']
 
 def get_top_tracks():
     my_top_ten_tracks = []
@@ -122,7 +118,6 @@ def add_songs_to_playlist(playlist_id):
     print(response)
 
 
-
 @app.route("/")
 def home_page():
     return render_template('home.html', 
@@ -150,6 +145,14 @@ def create_playlist():
 
 
 if __name__ == '__main__':
+    refresh_user_token()
+    
+    ACCESS_TOKEN = os.environ['ACCESS_TOKEN']
+    
+    headers = {
+        'Authorization': f'Bearer {ACCESS_TOKEN}',
+    }
+    
     current_user, current_user_id = get_current_user()
     top_tracks_details = get_top_tracks()
     top_five_tracks = get_top_five(top_tracks_details)
