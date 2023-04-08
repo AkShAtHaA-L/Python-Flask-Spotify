@@ -33,3 +33,10 @@ Sample response would be -
 Set the env variables - CLIENT_ID,CLIENT_SECRET,REFRESH_TOKEN
 The code gets a new token using REFRESH_TOKEN every time it is executed.
 
+![python-spotify](https://user-images.githubusercontent.com/124445330/230706094-e81c4b42-64f5-4d44-9d0e-ced012a2f430.png)
+
+- Top 5 user hits for the last month
+- Recommended songs based on the top hits
+- Missed hits from top-50 India playlist
+
+Create playlist button, would create a playlist in the user account combining the recommended songs and the missed hits.
