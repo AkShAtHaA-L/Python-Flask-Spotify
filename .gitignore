@@ -109,6 +109,7 @@ venv/
 ENV/
 env.bak/
 venv.bak/
+connect_to_spotify.py
 
 # Spyder project settings
 .spyderproject
